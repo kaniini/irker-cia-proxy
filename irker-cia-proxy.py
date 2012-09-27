@@ -18,6 +18,8 @@ from xml.dom import minidom
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
 
+bind_ip = ''
+bind_port = 8000
 target_server = "localhost"
 target_port = 6659
 template = "%(bold)s%(project)s:%(bold)s %(green)s%(author)s%(reset)s %(yellow)s%(branch)s%(reset)s * r%(bold)s%(revision)s%(bold)s /%(files)s%(bold)s:%(bold)s %(log)s"
@@ -138,8 +140,7 @@ def deliver(message):
     CIAMessage(message).relay()
     return True
 
-server = SimpleXMLRPCServer(('', 8000), CIARequestHandler)
+server = SimpleXMLRPCServer((bind_ip, bind_port), CIARequestHandler)
 server.register_introspection_functions()
 server.register_function(deliver, 'hub.deliver')
 server.serve_forever()
-
