@@ -125,7 +125,6 @@ class CIAMessage:
     def relay(self):
         structure = {"to": self.get_target(), "privmsg": self.message()}
         envelope = json.dumps(structure)
-        print envelope
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.sendto(envelope + "\n", (target_server, target_port))
