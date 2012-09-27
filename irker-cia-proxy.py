@@ -26,13 +26,21 @@ projmap = json.load(open("projmap.json"))
 
 class CIAMessage:
     "Abstract class which represents a CIA message."
+    _files = []
     def __init__(self, messagexml):
         self._dom = minidom.parseString(messagexml)
+        filenode = self.dig('message', 'body', 'commit', 'files')
+        if filenode is not None:
+            for child in filenode.childNodes:
+                if child.nodeName == 'file':
+                    self._files.append(self._shallowtext(child))
     def _shallowtext_generator(self, node):
         for child in node.childNodes:
             if child.nodeType == child.TEXT_NODE:
                 yield child.data
     def _shallowtext(self, node):
+        if node is None:
+            return None
         return ''.join(self._shallowtext_generator(node))
     def dig(self, *subElements):
         if not self._dom:
@@ -48,21 +56,26 @@ class CIAMessage:
                 node = nextNode
             else:
                 return None
-        return self._shallowtext(node).strip()
+        return node
+    def lookup(self, *subElements):
+        text = self._shallowtext(self.dig(*subElements))
+        if text is not None:
+            return text.strip()
+        return None
     def data(self):
         paths = {}
-        paths['project'] = self.dig('message', 'source', 'project')
-        paths['branch'] = self.dig('message', 'source', 'branch')
-        paths['module'] = self.dig('message', 'source', 'module')
-        paths['revision'] = self.dig('message', 'body', 'commit', 'revision')
-        paths['version'] = self.dig('message', 'body', 'commit', 'version')
-        paths['author'] = self.dig('message', 'body', 'commit', 'author')
-        paths['log'] = self.dig('message', 'body', 'commit', 'log')
-        paths['files'] = self.dig('message', 'body', 'commit', 'files')
-        paths['url'] = self.dig('message', 'body', 'commit', 'url')
+        paths['project'] = self.lookup('message', 'source', 'project')
+        paths['branch'] = self.lookup('message', 'source', 'branch')
+        paths['module'] = self.lookup('message', 'source', 'module')
+        paths['revision'] = self.lookup('message', 'body', 'commit', 'revision')
+        paths['version'] = self.lookup('message', 'body', 'commit', 'version')
+        paths['author'] = self.lookup('message', 'body', 'commit', 'author')
+        paths['log'] = self.lookup('message', 'body', 'commit', 'log')
+        paths['files'] = ' '.join(self._files)
+        paths['url'] = self.lookup('message', 'body', 'commit', 'url')
         return paths
     def project(self):
-        return self.dig('message', 'source', 'project')
+        return self.lookup('message', 'source', 'project')
     def message(self):
         return template % self.data()
     def relay(self):
