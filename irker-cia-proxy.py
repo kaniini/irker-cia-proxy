@@ -14,38 +14,59 @@ from the use of this software.
 """
 
 import json, socket
-import xml.parsers.expat
+from xml.dom import minidom
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
 
 target_server = "localhost"
 target_port = 6659
-template = "%(message/source/project)s %(message/body/commit/author)s %(message/source/branch)s * %(message/body/commit/revision)s / %(message/body/commit/files/file)s: %(message/body/commit/log)s"
+template = "%(project)s %(author)s %(branch)s * %(revision)s / %(files)s: %(log)s"
 
 projmap = json.load(open("projmap.json"))
 
 class CIAMessage:
     "Abstract class which represents a CIA message."
     def __init__(self, messagexml):
-        self._field = []
-        self._data = {}
-        parser = xml.parsers.expat.ParserCreate()
-        def _elem_start(name, attrs):
-            self._field.append(name)
-        parser.StartElementHandler = _elem_start
-        def _elem_data(data):
-            self._data['/'.join(self._field)] = data
-        parser.CharacterDataHandler = _elem_data
-        def _elem_end(end):
-            self._field.pop()
-        parser.EndElementHandler = _elem_end
-        parser.Parse(messagexml)
+        self._dom = minidom.parseString(messagexml)
+    def _shallowtext_generator(self, node):
+        for child in node.childNodes:
+            if child.nodeType == child.TEXT_NODE:
+                yield child.data
+    def _shallowtext(self, node):
+        return ''.join(self._shallowtext_generator(node))
+    def dig(self, *subElements):
+        if not self._dom:
+            return None
+        node = self._dom
+        for name in subElements:
+            nextNode = None
+            for child in node.childNodes:
+                if child.nodeType == child.ELEMENT_NODE and child.nodeName == name:
+                    nextNode = child
+                    break
+            if nextNode:
+                node = nextNode
+            else:
+                return None
+        return self._shallowtext(node).strip()
     def data(self):
-        return self._data
+        paths = {}
+        paths['project'] = self.dig('message', 'source', 'project')
+        paths['branch'] = self.dig('message', 'source', 'branch')
+        paths['module'] = self.dig('message', 'source', 'module')
+        paths['revision'] = self.dig('message', 'body', 'commit', 'revision')
+        paths['version'] = self.dig('message', 'body', 'commit', 'version')
+        paths['author'] = self.dig('message', 'body', 'commit', 'author')
+        paths['log'] = self.dig('message', 'body', 'commit', 'log')
+        paths['files'] = self.dig('message', 'body', 'commit', 'files')
+        paths['url'] = self.dig('message', 'body', 'commit', 'url')
+        return paths
+    def project(self):
+        return self.dig('message', 'source', 'project')
     def message(self):
-        return template % self._data
+        return template % self.data()
     def relay(self):
-        structure = {"to": projmap[self._data['message/source/project']], "privmsg": self.message()}
+        structure = {"to": projmap[self.project()], "privmsg": self.message()}
         envelope = json.dumps(structure)
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
