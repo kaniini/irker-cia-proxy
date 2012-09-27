@@ -1,2 +1,2 @@
-{"testproj": "irc://irc.atheme.org/#atheme",
- "some-other-thing": ["irc://irc.freenode.net/#commits", "irc://irc.atheme.org/#botspam"]}
+{"testproj": {"to": "irc://irc.atheme.org/#atheme"},
+ "some-other-thing": {"to": ["irc://irc.freenode.net/#commits", "irc://irc.atheme.org/#botspam"]}}

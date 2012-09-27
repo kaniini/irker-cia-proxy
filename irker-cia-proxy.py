@@ -112,11 +112,18 @@ class CIAMessage:
         return paths
     def project(self):
         return self.lookup('message', 'source', 'project')
+    def get_template(self):
+        if projmap[self.project()].has_key('template'):
+            return projmap[self.project()]['template']
+        return template
+    def get_target(self):
+        return projmap[self.project()]['to']
     def message(self):
-        return template % self.data()
+        return self.get_template() % self.data()
     def relay(self):
-        structure = {"to": projmap[self.project()], "privmsg": self.message()}
+        structure = {"to": self.get_target(), "privmsg": self.message()}
         envelope = json.dumps(structure)
+        print envelope
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.sendto(envelope + "\n", (target_server, target_port))
