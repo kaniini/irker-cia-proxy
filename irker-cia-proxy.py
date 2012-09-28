@@ -22,7 +22,7 @@ bind_ip = ''
 bind_port = 8000
 target_server = "localhost"
 target_port = 6659
-template = "%(bold)s%(project)s:%(bold)s %(green)s%(author)s%(reset)s %(yellow)s%(branch)s%(reset)s * r%(bold)s%(revision)s%(bold)s /%(files)s%(bold)s:%(bold)s %(log)s"
+template = "%(bold)s%(project)s:%(bold)s %(green)s%(author)s%(reset)s %(yellow)s%(branch)s%(reset)s * r%(bold)s%(revision)s%(bold)s %(module)s/%(files)s%(bold)s:%(bold)s %(log)s"
 
 projmap = json.load(open("projmap.json"))
 
