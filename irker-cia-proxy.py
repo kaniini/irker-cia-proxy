@@ -13,7 +13,7 @@ implied. In no event shall the authors be liable for any damages arising
 from the use of this software.
 """
 
-import json, socket, posixpath, re
+import json, socket, posixpath, re, sys
 from xml.dom import minidom
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
@@ -131,15 +131,18 @@ class CIAMessage:
         finally:
             sock.close()
 
-class CIARequestHandler(SimpleXMLRPCRequestHandler):
-    "A fake CIA server for receiving messages to translate and proxy."
-    rpc_paths = ('/RPC2')
+if "-s" in sys.argv:
+    CIAMessage(sys.stdin.read()).relay()
+else:
+    class CIARequestHandler(SimpleXMLRPCRequestHandler):
+        "A fake CIA server for receiving messages to translate and proxy."
+        rpc_paths = ('/RPC2')
 
-def deliver(message):
-    CIAMessage(message).relay()
-    return True
+    def deliver(message):
+        CIAMessage(message).relay()
+        return True
 
-server = SimpleXMLRPCServer((bind_ip, bind_port), CIARequestHandler)
-server.register_introspection_functions()
-server.register_function(deliver, 'hub.deliver')
-server.serve_forever()
+    server = SimpleXMLRPCServer((bind_ip, bind_port), CIARequestHandler)
+    server.register_introspection_functions()
+    server.register_function(deliver, 'hub.deliver')
+    server.serve_forever()
