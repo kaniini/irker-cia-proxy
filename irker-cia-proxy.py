@@ -115,6 +115,10 @@ class CIAMessage:
     def project(self):
         return self.lookup('message', 'source', 'project')
     def get_template(self):
+        # If there is a template for this branch, use it, otherwise fall back to the project or the global one.
+        branch_template = "template-%s" % self.data()['branch']
+        if projmap[self.project()].has_key(branch_template):
+            return projmap[self.project()][branch_template]
         if projmap[self.project()].has_key('template'):
             return projmap[self.project()]['template']
         return template
