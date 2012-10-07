@@ -25,6 +25,8 @@ target_port = 6659
 template = "%(bold)s%(project)s:%(bold)s %(green)s%(author)s%(reset)s %(yellow)s%(branch)s%(reset)s * r%(bold)s%(revision)s%(bold)s %(module)s/%(files)s%(bold)s:%(bold)s %(log)s"
 
 projmap = json.load(open("projmap.json"))
+if isinstance(projmap, dict):
+    newmap = [{"project":p, "to":projmap[p]["to"]} for p in projmap]
 
 class CIAMessage:
     "Abstract class which represents a CIA message."
@@ -114,26 +116,37 @@ class CIAMessage:
         return paths
     def project(self):
         return self.lookup('message', 'source', 'project')
-    def get_template(self):
+    def get_template(self, project):
         # If there is a template for this branch, use it, otherwise fall back to the project or the global one.
         branch_template = "template-%s" % self.data()['branch']
-        if projmap[self.project()].has_key(branch_template):
-            return projmap[self.project()][branch_template]
-        if projmap[self.project()].has_key('template'):
-            return projmap[self.project()]['template']
+        if project.has_key(branch_template):
+            return project[branch_template]
+        if project.has_key('template'):
+            return project['template']
         return template
-    def get_target(self):
-        return projmap[self.project()]['to']
-    def message(self):
-        return self.get_template() % self.data()
+    def get_targets(self):
+        data = self.data()
+        targets = []
+        for proj in projmap:
+            if "project" in proj and data["project"] != proj["project"]:
+                continue
+            if "branch" in proj and data["branch"] != proj["branch"]:
+                continue
+            if "module" in proj and data["module"] != proj["module"]:
+                continue
+            if "author" in proj and data["author"] != proj["author"]:
+                continue
+            targets.append( (proj["to"], self.get_template(proj) % data) )
+        return list(targets)
     def relay(self):
-        structure = {"to": self.get_target(), "privmsg": self.message()}
-        envelope = json.dumps(structure)
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.sendto(envelope + "\n", (target_server, target_port))
-        finally:
-            sock.close()
+        for (target, message) in self.get_targets():
+            structure = {"to": target, "privmsg": message}
+            envelope = json.dumps(structure)
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                sock.sendto(envelope + "\n", (target_server, target_port))
+            finally:
+                sock.close()
 
 if "-s" in sys.argv:
     CIAMessage(sys.stdin.read()).relay()
