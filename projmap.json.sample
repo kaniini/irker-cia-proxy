@@ -1,2 +1,15 @@
-{"testproj": {"to": "irc://irc.atheme.org/#atheme"},
- "some-other-thing": {"to": ["irc://irc.freenode.net/#commits", "irc://irc.atheme.org/#botspam"]}}
+[
+{
+    "project": "testproj",
+    "to": ["irc://chat.freenode.net/#testproj", "irc://chat.freenode.net/#commits"]
+},
+{
+    "project": "some-other-thing",
+    "module": "botspam",
+    "to": ["irc://chat.freenode.net/#commits", "irc://chat.atheme.org/#botspam"]
+},
+{
+    "author": "me",
+    "to": "irc://chat.freenode.net/##my-awesome-channel"
+}
+]
