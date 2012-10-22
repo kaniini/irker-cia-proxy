@@ -31,7 +31,7 @@ if isinstance(projmap, dict):
 class CIAMessage:
     "Abstract class which represents a CIA message."
     def __init__(self, messagexml):
-        self._dom = minidom.parseString(messagexml)
+        self._dom = minidom.parseString(messagexml.encode("utf-8"))
     def _render_files(self):
         prefix, endings = self._consolidate_files()
         endstr = ' '.join(endings)
