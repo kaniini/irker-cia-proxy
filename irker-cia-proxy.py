@@ -99,10 +99,10 @@ class CIAMessage:
     def data(self):
         paths = {
             'bold': '\x02',
-            'green': '\x033',
-            'blue': '\x032',
-            'yellow': '\x037',
-            'reset': '\x0F' 
+            'green': '\x0303',
+            'blue': '\x0312',
+            'yellow': '\x0307',
+            'reset': '\x0F'
         }
         paths['project'] = self.lookup('message', 'source', 'project')
         paths['branch'] = self.lookup('message', 'source', 'branch')
