@@ -13,7 +13,7 @@ implied. In no event shall the authors be liable for any damages arising
 from the use of this software.
 """
 
-import json, socket, posixpath, re, sys
+import json, socket, posixpath, re, sys, collections
 from xml.dom import minidom
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
@@ -27,6 +27,9 @@ template = "%(bold)s%(project)s:%(bold)s %(green)s%(author)s%(reset)s %(yellow)s
 projmap = json.load(open("projmap.json"))
 if isinstance(projmap, dict):
     newmap = [{"project":p, "to":projmap[p]["to"]} for p in projmap]
+
+def equal_or_in(data, proj):
+  return data in proj if isinstance(proj, collections.Iterable) else data == proj
 
 class CIAMessage:
     "Abstract class which represents a CIA message."
@@ -128,13 +131,13 @@ class CIAMessage:
         data = self.data()
         targets = []
         for proj in projmap:
-            if "project" in proj and data["project"] != proj["project"]:
+            if "project" in proj and not equal_or_in(data["project"], proj["project"]):
                 continue
-            if "branch" in proj and data["branch"] != proj["branch"]:
+            if "branch" in proj and not equal_or_in(data["branch"], proj["branch"]):
                 continue
-            if "module" in proj and data["module"] != proj["module"]:
+            if "module" in proj and not equal_or_in(data["module"], proj["module"]):
                 continue
-            if "author" in proj and data["author"] != proj["author"]:
+            if "author" in proj and not equal_or_in(data["author"], proj["author"]):
                 continue
             targets.append( (proj["to"], self.get_template(proj) % data) )
         return list(targets)
